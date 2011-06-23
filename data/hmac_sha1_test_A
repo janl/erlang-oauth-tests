@@ -4,6 +4,6 @@
 
 {base_string, "bs"}.
 
-{cs, "cs"}.
+{consumer, {"", "cs", hmac_sha1}}.
 
-{ts, ""}.
+{token_secret, ""}.

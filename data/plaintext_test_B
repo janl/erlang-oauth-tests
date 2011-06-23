@@ -2,6 +2,6 @@
 
 {signature, "djr9rjt0jd78jf88&jjd99%24tj88uiths3"}.
 
-{cs, "djr9rjt0jd78jf88"}.
+{consumer, {"", "djr9rjt0jd78jf88", plaintext}}.
 
-{ts, "jjd99$tj88uiths3"}.
+{token_secret, "jjd99$tj88uiths3"}.

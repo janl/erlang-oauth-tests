@@ -2,60 +2,46 @@
 
 -compile(export_all).
 
-
 tests() ->
   tests("data").
 
 tests(Path) ->
   signature_base_string_tests(Path),
-  plaintext_signature_tests(Path),
-  plaintext_verify_tests(Path),
-  hmac_sha1_signature_tests(Path),
-  hmac_sha1_verify_tests(Path),
-  rsa_sha1_signature_test(Path),
-  rsa_sha1_verify_test(Path).
+  plaintext_tests(Path),
+  hmac_sha1_tests(Path),
+  rsa_sha1_tests(Path).
 
 signature_base_string_tests(Dirname) ->
-  foreach(Dirname, "base_string_test_*", fun(Path) ->
+  foreach(Dirname, "base_string_test_*", fun (Path) ->
     [Method, URL, Params, BaseString] = path_get_values([method, url, params, base_string], Path),
     test(Path, oauth, signature_base_string, [Method, URL, Params], BaseString)
   end).
 
-plaintext_signature_tests(Dirname) ->
-  foreach(Dirname, "plaintext_test_*", fun(Path) ->
-    [CS, TS, Signature] = path_get_values([cs, ts, signature], Path),
-    test(Path, oauth_plaintext, signature, [CS, TS], Signature)
+plaintext_tests(Dirname) ->
+  foreach(Dirname, "plaintext_test_*", fun (Path) ->
+    [Consumer, TokenSecret, Signature] = path_get_values([consumer, token_secret, signature], Path),
+    test(Path, oauth, plaintext_signature, [Consumer, TokenSecret], Signature),
+    test(Path, oauth, plaintext_verify, [Signature, Consumer, TokenSecret], true)
   end).
 
-plaintext_verify_tests(Dirname) ->
-  foreach(Dirname, "plaintext_test_*", fun(Path) ->
-    [CS, TS, Signature] = path_get_values([cs, ts, signature], Path),
-    test(Path, oauth_plaintext, verify, [Signature, CS, TS], true)
+hmac_sha1_tests(Dirname) ->
+  foreach(Dirname, "hmac_sha1_test_*", fun (Path) ->
+    {ok, Data} = file:consult(Path),
+    BaseString = proplists:get_value(base_string, Data),
+    Consumer = proplists:get_value(consumer, Data),
+    TokenSecret = proplists:get_value(token_secret, Data),
+    Signature = proplists:get_value(signature, Data),
+    test(Path, oauth, hmac_sha1_signature, [BaseString, Consumer, TokenSecret], Signature),
+    test(Path, oauth, hmac_sha1_verify, [Signature, BaseString, Consumer, TokenSecret], true)
   end).
 
-hmac_sha1_signature_tests(Dirname) ->
-  foreach(Dirname, "hmac_sha1_test_*", fun(Path) ->
-    [BaseString, CS, TS, Signature] = path_get_values([base_string, cs, ts, signature], Path),
-    test(Path, oauth_hmac_sha1, signature, [BaseString, CS, TS], Signature)
-  end).
-
-hmac_sha1_verify_tests(Dirname) ->
-  foreach(Dirname, "hmac_sha1_test_*", fun(Path) ->
-    [BaseString, CS, TS, Signature] = path_get_values([base_string, cs, ts, signature], Path),
-    test(Path, oauth_hmac_sha1, verify, [Signature, BaseString, CS, TS], true)
-  end).
-
-rsa_sha1_signature_test(Dirname) ->
+rsa_sha1_tests(Dirname) ->
   Path = filename:join(Dirname, "rsa_sha1_test"),
-  Key = filename:join(Dirname, "rsa_sha1_private_key.pem"),
-  [BaseString, Signature] = path_get_values([base_string, signature], Path),
-  test("rsa_sha1_test", oauth_rsa_sha1, signature, [BaseString, Key], Signature).
-
-rsa_sha1_verify_test(Dirname) ->
-  Path = filename:join(Dirname, "rsa_sha1_test"),
+  Pkey = filename:join(Dirname, "rsa_sha1_private_key.pem"),
   Cert = filename:join(Dirname, "rsa_sha1_certificate.pem"),
   [BaseString, Signature] = path_get_values([base_string, signature], Path),
-  test("rsa_sha1_test", oauth_rsa_sha1, verify, [Signature, BaseString, Cert], true).
+  test("rsa_sha1_test", oauth, rsa_sha1_signature, [BaseString, {"", Pkey, rsa_sha1}], Signature),
+  test("rsa_sha1_test", oauth, rsa_sha1_verify, [Signature, BaseString, {"", Cert, rsa_sha1}], true).
 
 test(Path, M, F, A, Expected) ->
   case apply(M, F, A) of
