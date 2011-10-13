@@ -1,13 +1,11 @@
-SOURCE_FILES := $(wildcard src/*.erl)
+all: clean compile test
 
-
-all: ebin
-
-ebin: $(SOURCE_FILES:src/%.erl=ebin/%.beam)
-
-ebin/%.beam: src/%.erl
+compile:
 	@test -d ebin || mkdir ebin
-	erlc -W +debug_info -o ebin $<
+	@erl -make
+
+test:
+	@erl -noshell -pa ebin -pa ../erlang-oauth/ebin -s crypto -s oauth_unit test -s init stop
 
 clean:
-	rm -rf ebin erl_crash.dump
+	@rm -rf ebin/*.beam
