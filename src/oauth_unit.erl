@@ -5,10 +5,10 @@
 -include_lib("eunit/include/eunit.hrl").
 
 wildcard(Pattern) ->
-  filelib:wildcard("../data/" ++ Pattern).
+  filelib:wildcard("data/" ++ Pattern).
 
 read(Keys, Path) ->
-  {ok, Proplist} = file:consult("../data/" ++ Path),
+  {ok, Proplist} = file:consult(Path),
   [proplists:get_value(K, Proplist) || K <- Keys].
 
 signature_base_string_test_() ->
@@ -41,9 +41,9 @@ hmac_sha1_signature_test_funs([Path | Paths], Tests) ->
   hmac_sha1_signature_test_funs(Paths, [SignatureTest, VerifyTest | Tests]).
 
 rsa_sha1_test_() ->
-  Pkey = "../data/rsa_sha1_private_key.pem",
-  Cert = "../data/rsa_sha1_certificate.pem",
-  [BaseString, Signature] = read([base_string, signature], "rsa_sha1_test"),
+  Pkey = "data/rsa_sha1_private_key.pem",
+  Cert = "data/rsa_sha1_certificate.pem",
+  [BaseString, Signature] = read([base_string, signature], wildcard("rsa_sha1_test*")),
   SignatureTest = ?_assertEqual(Signature, oauth:rsa_sha1_signature(BaseString, {"", Pkey, rsa_sha1})),
   VerifyTest = ?_assertEqual(true, oauth:rsa_sha1_verify(Signature, BaseString, {"", Cert, rsa_sha1})),
   [SignatureTest, VerifyTest].
